@@ -1,13 +1,30 @@
-{
-	"setup": {
-		"city": "Bangkok",
-		"delay": 5
-	},
-	"config": [
-		{ "emoji": "🧡", "text": "TEXT 1" },
-		{ "emoji": "💛", "text": "TEXT 2" },
-		{ "emoji": "💚", "text": "TEXT 3" },
-		{ "emoji": "💙", "text": "TEXT 4" },
-		{ "emoji": "💜", "text": "TEXT 5" }
-	]
+
+  "setup": {
+    "city": "Bien Hoa",
+    "delay": 3
+  },
+  "config": [
+    { "emoji": "", "text": "🎧 › {hour:1}:{min:1} ⋆ Lần Cuối - Karik" },
+    { "emoji": "", "text": "🎸 › {hour:1}:{min:1} ⋆ Thương - Karik, Vũ Phụng Tiên" },
+    { "emoji": "", "text": "🎵 › {hour:1}:{min:1} ⋆ Khóc Một Mình - Karik, Windy" },
+    { "emoji": "", "text": "🎹 › {hour:1}:{min:1} ⋆ Nơi Này Có Anh - Sơn Tùng M-TP" },
+    { "emoji": "", "text": "🚭 › {hour:1}:{min:1} ⋆ Voicemail 語音郵件 - Han Kim" },
+    { "emoji": "", "text": "🎼 › {hour:1}:{min:1} ⋆ Con Trai Cưng - B Ray, K-ICM" },
+    { "emoji": "", "text": "🎻 › {hour:1}:{min:1} ⋆ Trước Khi Em Tồn Tại (Cover) - Việt Anh" },
+    { "emoji": "", "text": "📻 › {hour:1}:{min:1} ⋆ Hồng Nhan - Jack" },
+    { "emoji": "", "text": "🎙 › {hour:1}:{min:1} ⋆ Cause I Love You - Noo Phước Thịnh" },
+    { "emoji": "", "text": "🎶 › {hour:1}:{min:1} ⋆ Nơi Tình Yêu Bắt Đầu - Bùi Anh Tuấn" },
+    { "emoji": "", "text": "🪕 › {hour:1}:{min:1} ⋆ Lối Nhỏ - Đen Vâu, Phương Anh Đào" },
+    { "emoji": "", "text": "🥁 › {hour:1}:{min:1} ⋆ Mot Nha - Da Lab"},
+    { "emoji": "", "text": "🔮 › {hour:1}:{min:1} ⋆ Vương - Nger" },
+    { "emoji": "", "text": "🧸 › {hour:1}:{min:1} ⋆ Thời Gian Sẽ Trả Lời - BigDaddy, JustaTee, and Tiên Cookie" },
+    { "emoji": "", "text": "🎺 › {hour:1}:{min:1} ⋆ 10 Ngàn Năm - PC (Prod. Duckie)" },
+    { "emoji": "", "text": "🕶 › {hour:1}:{min:1} ⋆ Nhật Ký - DLow" },
+    { "emoji": "", "text": "🎱 › {hour:1}:{min:1} ⋆ Lạ Lùng - Vũ." },
+    { "emoji": "", "text": "🎮 › {hour:1}:{min:1} ⋆ Từng Quen - Wren Evans" },
+    { "emoji": "", "text": "🥼 › {hour:1}:{min:1} ⋆ Buồn Của Anh - K-ICM, Đạt G, Masew" },
+    { "emoji": "", "text": "🎲 › {hour:1}:{min:1} ⋆ Nếu Em Ở Lại - Khói" },
+    { "emoji": "", "text": "🔒 › {hour:1}:{min:1} ⋆ Phía Sau Em - Kay Trần ft Binz" },
+    { "emoji": "", "text": "🔑 › {hour:1}:{min:1} ⋆ Khong Ten - MCK" }
+  ]
 }
