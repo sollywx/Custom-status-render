@@ -1,4 +1,5 @@
-"setup": {
+{
+  "setup": {
     "city": "Bien Hoa",
     "delay": 3
   },
