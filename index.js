@@ -3,7 +3,7 @@
 
 // revere engineer
 
-
+const keep_alive = require('./keep_alive.js')
 const { Client: DiscordClient, CustomStatus, Options } = require("discord.js-selfbot-v13");
 const moment = require("moment-timezone");
 const { schedule } = require("node-cron");
