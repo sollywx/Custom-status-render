@@ -1,7 +1,7 @@
 {
   "setup": {
     "city": "Ho Chi Minh city",
-    "delay": 3
+    "delay": 1
   },
   "config": [
     { "emoji": "", "text": "{NF3({emoji:time} › {hour:1}:{min:1} ⋆ {th=date} / {en=month:2} / {en=year:2})}" }
