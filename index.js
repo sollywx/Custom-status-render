@@ -1,3 +1,4 @@
+
 // เอาไปแจกต่อให้เครดิตด้วย | Deobf by 4levy ใครเปลี่ยนขอให้ไม่เจอดี
 
 // revere engineer
@@ -7,9 +8,11 @@ const { Client: DiscordClient, CustomStatus, Options } = require("discord.js-sel
 const moment = require("moment-timezone");
 const { schedule } = require("node-cron");
 const os = require('os');
-const fetch = require('node-fetch');
 const express = require("express");
-const colors = require('colors'); // Optional: For colored console logs
+const config = require('./setup/config.json');
+const colors = require('colors');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const fs = require('fs');
 require('dotenv').config();
 
 
@@ -34,26 +37,66 @@ function createInterval(fn, delay) {
 }
 
 class Weather {
-    constructor(location) {
-        this.location = location;
+    constructor() {
+        const setupConfig = config.setup || {};
+        
+        this.countryDefaults = {
+            "Australia": "Sydney",
+            "USA": "New York",
+            "UK": "London",
+            "Japan": "Tokyo",
+            "China": "Beijing",
+            "Vietnam": "Ho Chi Minh City",
+            // Add more country-city mappings as needed
+        };
+
+        this.location = this.processLocation(setupConfig.city || "Pattaya");
+        this.updateDelay = (setupConfig.delay || 5) * 60000;
         this.stop = 0;
-        schedule("*/5 * * * *", () => this.update());
+        this.timezone = "Asia/Bangkok";
+        this.retryDelay = 5000;
+        this.maxRetries = 3;
+        console.log(`[+] Using location: ${this.location}`);
+        console.log(`[+] Update interval: ${this.updateDelay/60000} minutes`);
+        this.update();
+    }
+
+    processLocation(input) {
+        if (!input) return "Bangkok"; 
+        
+        const defaultCity = this.countryDefaults[input];
+        if (defaultCity) {
+            console.log(`[!] ${input} is a country. Using ${defaultCity} as the default city.`);
+            return defaultCity;
+        }
+        
+        return input; 
     }
 
     async update() {
         try {
-            let params = new URLSearchParams();
-            params.append("key", "1e1a0f498dbf472cb3991045241608");
-            params.append('q', encodeURIComponent(this.location));
-            params.append("aqi", "yes");
-
-            let response = await fetch("https://api.weatherapi.com/v1/current.json?" + params);
-            let data = await response.json();
+            const params = new URLSearchParams({
+                key: "1e1a0f498dbf472cb3991045241608",
+                q: encodeURIComponent(this.location),
+                aqi: "yes"
+            });
+            const response = await fetch(`https://api.weatherapi.com/v1/current.json?${params}`);
+            if (!response.ok) {
+                throw new Error(`API responded with status ${response.status}`);
+            }
+            const data = await response.json();
+            if (!data.location || !data.current) {
+                throw new Error("Invalid API response format");
+            }
 
             this.timezone = data.location.tz_id;
+            this.localtime = data.location.localtime;
+            this.localtime_epoch = data.location.localtime_epoch;
+            
             this.city = data.location.name;
             this.region = data.location.region;
             this.country = data.location.country;
+            
             this.temp_c = data.current.temp_c;
             this.temp_f = data.current.temp_f;
             this.wind_kph = data.current.wind_kph;
@@ -72,11 +115,32 @@ class Weather {
             this.cloud = data.current.cloud;
             this.uv = data.current.uv;
             this.pm2_5 = data.current.air_quality.pm2_5;
+            this.condition = data.current.condition?.text;
+
+            const formattedTime = moment.tz(this.localtime, this.timezone).format('YYYY-MM-DD HH:mm:ss');
+            console.log(`[+] Weather updated for ${this.city}, ${this.country} | ${this.temp_c}°C | Local time: ${formattedTime}`);
+            
+            this.stop = 0;
+            setTimeout(() => this.update(), this.updateDelay);
+            
         } catch (error) {
-            if (this.stop > 10) return;
-            this.stop++;
-            this.update();
+            console.error(`[-] Weather update failed: ${error.message}`);
+            if (this.stop < this.maxRetries) {
+                this.stop++;
+                console.log(`[*] Retrying in ${this.retryDelay/1000} seconds... (Attempt ${this.stop}/${this.maxRetries})`);
+                setTimeout(() => this.update(), this.retryDelay);
+            } else {
+                console.log(`[-] Max retries reached. Using default values.`);
+                this.temp_c = "N/A";
+                this.temp_f = "N/A";
+                this.condition = "Unknown";
+                this.localtime = "N/A";
+            }
         }
+    }
+
+    getLocalTime() {
+        return moment.tz(this.localtime, this.timezone).format('YYYY-MM-DD HH:mm:ss');
     }
 }
 
@@ -296,7 +360,6 @@ class ModClient extends DiscordClient {
         if (!input) return input || null;
         let { weather, sys, emoji, textFont, lib } = this;
     
-        // Safeguard weather object and timezone
         let localTime = weather?.timezone 
             ? moment().locale('th').tz(weather.timezone)
             : moment();
@@ -304,12 +367,11 @@ class ModClient extends DiscordClient {
             ? moment().locale('en').tz(weather.timezone)
             : moment.utc();
     
-        // Fallback for weather properties
         let uptime = parseDuration(this.uptime || 0);
         let randomEmoji = emoji?.random?.() || "❓";
         let timeEmoji = emoji?.getTime?.(utcTime.format('HH')) || "🕒";
         let clockEmoji = emoji?.getClock?.(utcTime.format('HH')) || "⏰";
-    
+         
         let variables = {
             'hour:1': utcTime.format('HH'),
             'hour:2': utcTime.format('hh'),
@@ -323,18 +385,54 @@ class ModClient extends DiscordClient {
             'th=month:3': localTime.format("MMMM"),
             'th=year:1': localTime.clone().add(543, "year").format('YY'),
             'th=year:2': localTime.clone().add(543, "year").format("YYYY"),
-            'city': weather?.city || "Unknown City",
-            'region': weather?.region || "Unknown Region",
-            'country': weather?.country || "Unknown Country",
-            'temp:c': weather?.temp_c || "?",
-            'temp:f': weather?.temp_f || "?",
-            'uptime:days': uptime.days || 0,
-            'uptime:hours': uptime.hours || 0,
-            'uptime:minutes': uptime.minutes || 0,
-            'uptime:seconds': uptime.seconds || 0,
+            'en=date': utcTime.format('Do'),
+            'en=week:1': utcTime.format("ddd"),
+            'en=week:2': utcTime.format("dddd"),
+            'en=month:1': utcTime.format('MM'),
+            'en=month:2': utcTime.format("MMM"),
+            'en=month:3': utcTime.format("MMMM"),
+            'en=year:1': utcTime.format('YY'),
+            'en=year:2': utcTime.format("YYYY"),
+            'city': weather.city,
+            'region': weather.region,
+            'country': weather.country,
+            'temp:c': weather.temp_c,
+            'temp:f': weather.temp_f,
+            'wind:kph': weather.wind_kph,
+            'wind:mph': weather.wind_mph,
+            'wind:degree': weather.wind_degree,
+            'wind:dir': weather.wind_dir,
+            'pressure:mb': weather.pressure_mb,
+            'pressure:in': weather.pressure_in,
+            'precip:mm': weather.precip_mm,
+            'precip:in': weather.precip_in,
+            'gust:kph': weather.gust_kph,
+            'gust:mph': weather.gust_mph,
+            'vis:km': weather.vis_km,
+            'vis:mi': weather.vis_mi,
+            'humidity': weather.humidity,
+            'cloud': weather.cloud,
+            'uv': weather.uv,
+            'pm2.5': weather.pm2_5,
+            'ping': Math.round(this.ws.ping),
+            'patch': lib.v.patch,
+            'cpu:name': sys.cpuname,
+            'cpu:cores': sys.cpucores,
+            'cpu:speed': sys.cpuspeed,
+            'cpu:usage': sys.cpu,
+            'ram:usage': sys.ram,
+            'uptime:days': uptime.days,
+            'uptime:hours': uptime.hours,
+            'uptime:minutes': uptime.minutes,
+            'uptime:seconds': uptime.seconds,
+            'count++': lib.count,
+            'user:name': this.user.username,
+            'guild=members': (match, guildId) => this.guilds.cache.get(guildId)?.memberCount ?? '?',
+            'guild=name': (match, guildId) => this.guilds.cache.get(guildId)?.name ?? '?',
+            'guild=icon': (match, guildId) => this.guilds.cache.get(guildId)?.iconURL() ?? '?',
             'emoji:random': randomEmoji,
             'emoji:time': timeEmoji,
-            'emoji:clock': clockEmoji,
+            'emoji:clock': clockEmoji
         };
 
         input = this.replaceVariables(input, variables);
@@ -440,4 +538,3 @@ class ModClient extends DiscordClient {
       setTimeout(() => process.exit(1), 3000);
     }
   })();
-  
